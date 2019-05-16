@@ -2,7 +2,7 @@ package com.ecommerce.microcommerce.web.controller;
 
 import com.ecommerce.microcommerce.dao.ProductDao;
 import com.ecommerce.microcommerce.model.Product;
-import com.ecommerce.microcommerce.web.exceptions.ProduitIntrouvableException;
+import com.ecommerce.microcommerce.web.exceptions.*;
 import com.fasterxml.jackson.databind.ser.FilterProvider;
 import com.fasterxml.jackson.databind.ser.impl.SimpleBeanPropertyFilter;
 import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
@@ -21,7 +21,7 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-@Api(tags = {"API pour es opérations CRUD sur les produits."})
+@Api(tags = {"API pour les opérations CRUD sur les produits."})
 @RestController
 public class ProductController {
 
@@ -91,6 +91,12 @@ public class ProductController {
 
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 
+        if(product.getPrix()==0)
+            throw new ProduitGratuitException("On ne peut pas donner un produit !");
+
+        if(product.getPrix()<product.getPrixAchat())
+            throw new ProduitVenteAPerteException("On ne peut vendre un produit à perte !");
+
         Product productAdded =  productDao.save(product);
 
         if (productAdded == null)
@@ -127,6 +133,12 @@ public class ProductController {
     @ApiOperation(value = "Modifie les données relative à un produit identifié par son ID")
     @PutMapping (value = "/Produits")
     public void updateProduit(@RequestBody Product product) {
+
+        if(product.getPrix()==0)
+            throw new ProduitGratuitException("On ne peut pas donner un produit !");
+
+        if(product.getPrix()<product.getPrixAchat())
+            throw new ProduitVenteAPerteException("On ne peut vendre un produit à perte !");
 
         productDao.save(product);
     }
