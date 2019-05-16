@@ -86,9 +86,15 @@ public class ProductController {
         return productDao.findByNomLike(nom);
     }
 
-    //ajouter un produit
+    /**
+     * ajouterProduit : Ajoute un produit dans la base de données
+     * POST /Produits
+     *
+     * @param product récupéré dans le body
+     * @return ResponseEntity
+     */
+    @ApiOperation(value = "Ajoute un produit dans la base de données")
     @PostMapping(value = "/Produits")
-
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
 
         if(product.getPrix()==0)
@@ -121,6 +127,9 @@ public class ProductController {
     @DeleteMapping (value = "/Produits/{id}")
     public void supprimerProduit(@PathVariable int id) {
 
+        if(productDao.findById(id) == null)
+            throw new ProduitIntrouvableException("On ne peut pas supprimer un produit qui n'existe pas !");
+
         productDao.delete(id);
     }
 
@@ -133,6 +142,9 @@ public class ProductController {
     @ApiOperation(value = "Modifie les données relative à un produit identifié par son ID")
     @PutMapping (value = "/Produits")
     public void updateProduit(@RequestBody Product product) {
+
+        if(productDao.findById(product.getId()) == null)
+            throw new ProduitIntrouvableException("On ne peut pas supprimer un produit qui n'existe pas !");
 
         if(product.getPrix()==0)
             throw new ProduitGratuitException("On ne peut pas donner un produit !");
@@ -166,7 +178,7 @@ public class ProductController {
      *
      * @return List des produits triés
      */
-    @ApiOperation(value="renvoie une liste des produits trié par ordre alphabétique")
+    @ApiOperation(value="Renvoie une liste des produits trié par ordre alphabétique")
     @GetMapping(value = "/Produits/triparnom")
     public List<Product> listProduitsTrieParNom(){
         return productDao.listProduitsAlphabetic();
