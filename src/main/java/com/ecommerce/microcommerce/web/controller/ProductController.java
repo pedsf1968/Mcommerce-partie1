@@ -68,7 +68,7 @@ public class ProductController {
 
         Product produit = productDao.findById(id);
 
-        if(produit==null) throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est INTROUVABLE. Écran Bleu si je pouvais.");
+        if(produit==null) throw new ProduitIntrouvableException("Le produit avec l'id " + id + " est introuvable !");
 
         return produit;
     }
@@ -96,6 +96,9 @@ public class ProductController {
     @ApiOperation(value = "Ajoute un produit dans la base de données")
     @PostMapping(value = "/Produits")
     public ResponseEntity<Void> ajouterProduit(@Valid @RequestBody Product product) {
+
+        if(productDao.findById(product.getId())!=null)
+           throw new ProduitExistantException("On ne peut pas dupliquer un produit !");
 
         if(product.getPrix()==0)
             throw new ProduitGratuitException("On ne peut pas donner un produit !");
