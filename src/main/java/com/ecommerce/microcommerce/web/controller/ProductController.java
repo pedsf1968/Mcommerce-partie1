@@ -29,8 +29,13 @@ public class ProductController {
     private ProductDao productDao;
 
 
-    //Récupérer la liste des produits
-
+    /**
+     * listeProduit : Récupérer la liste des produits en filtrant certains champs
+     * GET /Produits
+     *
+     * @return MappingJacksonValue liste des produits filtré
+     */
+    @ApiOperation(value = "Récupère la liste des produits en filtrant certains champs")
     @RequestMapping(value = "/Produits", method = RequestMethod.GET)
 
     public MappingJacksonValue listeProduits() {
@@ -49,7 +54,13 @@ public class ProductController {
     }
 
 
-    //Récupérer un produit par son Id
+    /**
+     * afficherUnProduit : Récupérer un produit grâce à son ID à condition que celui-ci soit en stock
+     * GET /Produits/{id}
+     *
+     * @param id identifiant récupéré dans l'URL
+     * @return produit trouvé
+     */
     @ApiOperation(value = "Récupère un produit grâce à son ID à condition que celui-ci soit en stock!")
     @GetMapping(value = "/Produits/{id}")
 
@@ -62,8 +73,18 @@ public class ProductController {
         return produit;
     }
 
-
-
+    /**
+     * rechercheProduitParSonNom : Recherche un produit par son nom
+     * GET /Produits/nom/{nom}
+     *
+     * @param nom du produit recherché
+     * @return List<Product> la liste des produits trouvés
+     */
+    @ApiOperation(value = "Recherche un produit par son nom")
+    @GetMapping(value = "/Produits/nom/{nom}")
+    public List<Product> rechercheProduitParSonNom(@PathVariable String nom){
+        return productDao.findByNomLike(nom);
+    }
 
     //ajouter un produit
     @PostMapping(value = "/Produits")
@@ -84,12 +105,26 @@ public class ProductController {
         return ResponseEntity.created(location).build();
     }
 
+    /**
+     * supprimerProduit : Supprime un produit identifié par son ID de la base de données
+     * DELETE /Produits/{id}
+     *
+     * @param id identifiant récupéré dans l'URL
+     */
+    @ApiOperation(value = "Supprime un produit identifié par son ID de la base de données")
     @DeleteMapping (value = "/Produits/{id}")
     public void supprimerProduit(@PathVariable int id) {
 
         productDao.delete(id);
     }
 
+    /**
+     * updateProduit : Modifie les données relative à un produit identifié par son ID
+     * PUT /Produits
+     *
+     * @param product récupéré dans le body
+     */
+    @ApiOperation(value = "Modifie les données relative à un produit identifié par son ID")
     @PutMapping (value = "/Produits")
     public void updateProduit(@RequestBody Product product) {
 
@@ -111,6 +146,18 @@ public class ProductController {
         }
 
         return mapProduits;
+    }
+
+    /**
+     * listProduitsTrieParNom : Renvoie une liste des produits trié par ordre alphabétique
+     * GET /Produits/triparnom
+     *
+     * @return List des produits triés
+     */
+    @ApiOperation(value="renvoie une liste des produits trié par ordre alphabétique")
+    @GetMapping(value = "/Produits/triparnom")
+    public List<Product> listProduitsTrieParNom(){
+        return productDao.listProduitsAlphabetic();
     }
 
     //Pour les tests
