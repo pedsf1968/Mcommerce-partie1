@@ -17,10 +17,11 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import javax.validation.Valid;
 import java.net.URI;
 import java.util.List;
+import java.util.Map;
+import java.util.TreeMap;
 
 
-@Api( description="API pour es opérations CRUD sur les produits.")
-
+@Api(tags = {"API pour es opérations CRUD sur les produits."})
 @RestController
 public class ProductController {
 
@@ -95,6 +96,22 @@ public class ProductController {
         productDao.save(product);
     }
 
+    /**
+     * calculerMargeProduit : Récupère la liste des produits et leur marge sous forme de Map<String,Integer>
+     * GET /AdminProduits
+     * @return Map<String,Integer> liste des produits et de leur marge
+     */
+    @ApiOperation(value = "Récupère la liste des produits et leur marge sous forme de Map<String,Integer>")
+    @GetMapping(value = "/AdminProduits")
+    public Map<String,Integer> calculerMargeProduit(){
+        Map<String,Integer> mapProduits = new TreeMap<>();
+
+        for(Product p: productDao.findAll()) {
+            mapProduits.put(p.toString(), p.getPrix() - p.getPrixAchat());
+        }
+
+        return mapProduits;
+    }
 
     //Pour les tests
     @GetMapping(value = "test/produits/{prix}")
