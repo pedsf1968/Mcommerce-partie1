@@ -9,6 +9,7 @@ import com.fasterxml.jackson.databind.ser.impl.SimpleFilterProvider;
 import io.swagger.annotations.Api;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.json.MappingJacksonValue;
 import org.springframework.web.bind.annotation.*;
@@ -21,7 +22,8 @@ import java.util.Map;
 import java.util.TreeMap;
 
 
-@Api(tags = {"API pour les opérations CRUD sur les produits."})
+@Api(description = "API pour les opérations CRUD sur les produits.")
+//@Api(tags = {"API pour les opérations CRUD sur les produits."})
 @RestController
 public class ProductController {
 
@@ -39,20 +41,14 @@ public class ProductController {
     @RequestMapping(value = "/Produits", method = RequestMethod.GET)
 
     public MappingJacksonValue listeProduits() {
-
         Iterable<Product> produits = productDao.findAll();
-
         SimpleBeanPropertyFilter monFiltre = SimpleBeanPropertyFilter.serializeAllExcept("prixAchat");
-
         FilterProvider listDeNosFiltres = new SimpleFilterProvider().addFilter("monFiltreDynamique", monFiltre);
-
         MappingJacksonValue produitsFiltres = new MappingJacksonValue(produits);
-
         produitsFiltres.setFilters(listDeNosFiltres);
 
         return produitsFiltres;
     }
-
 
     /**
      * afficherUnProduit : Récupérer un produit grâce à son ID à condition que celui-ci soit en stock
@@ -64,7 +60,7 @@ public class ProductController {
     @ApiOperation(value = "Récupère un produit grâce à son ID à condition que celui-ci soit en stock!")
     @GetMapping(value = "/Produits/{id}")
 
-    public Product afficherUnProduit(@PathVariable int id) {
+    public Product afficherUnProduit(@PathVariable int id) throws ProduitIntrouvableException {
 
         Product produit = productDao.findById(id);
 
@@ -74,16 +70,16 @@ public class ProductController {
     }
 
     /**
-     * rechercheProduitParSonNom : Recherche un produit par son nom
-     * GET /Produits/nom/{nom}
+     * rechercheProduitParSonNom : Recherche les produits dont le nom contient un texte
+     * GET /Produits/recherche/{texte}
      *
-     * @param nom du produit recherché
+     * @param texte du produit recherché
      * @return List<Product> la liste des produits trouvés
      */
-    @ApiOperation(value = "Recherche un produit par son nom")
-    @GetMapping(value = "/Produits/nom/{nom}")
-    public List<Product> rechercheProduitParSonNom(@PathVariable String nom){
-        return productDao.findByNomLike(nom);
+    @ApiOperation(value = "Recherche les produits dont le nom contient un texte")
+    @GetMapping(value = "/Produits/recherche/{texte}")
+    public List<Product> rechercheProduitParSonNom(@PathVariable String texte){
+        return productDao.findByNomLike("%" + texte +"%");
     }
 
     /**
@@ -128,12 +124,13 @@ public class ProductController {
      */
     @ApiOperation(value = "Supprime un produit identifié par son ID de la base de données")
     @DeleteMapping (value = "/Produits/{id}")
-    public void supprimerProduit(@PathVariable int id) {
+    public ResponseEntity<Void> supprimerProduit(@PathVariable int id) {
 
         if(productDao.findById(id) == null)
             throw new ProduitIntrouvableException("On ne peut pas supprimer un produit qui n'existe pas !");
 
         productDao.delete(id);
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -144,7 +141,7 @@ public class ProductController {
      */
     @ApiOperation(value = "Modifie les données relative à un produit identifié par son ID")
     @PutMapping (value = "/Produits")
-    public void updateProduit(@RequestBody Product product) {
+    public ResponseEntity<Void> updateProduit(@RequestBody Product product) {
 
         if(productDao.findById(product.getId()) == null)
             throw new ProduitIntrouvableException("On ne peut pas supprimer un produit qui n'existe pas !");
@@ -156,6 +153,8 @@ public class ProductController {
             throw new ProduitVenteAPerteException("On ne peut vendre un produit à perte !");
 
         productDao.save(product);
+
+        return ResponseEntity.accepted().build();
     }
 
     /**
@@ -165,14 +164,14 @@ public class ProductController {
      */
     @ApiOperation(value = "Récupère la liste des produits et leur marge sous forme de Map<String,Integer>")
     @GetMapping(value = "/AdminProduits")
-    public Map<String,Integer> calculerMargeProduit(){
+    public ResponseEntity<Map<String,Integer>> calculerMargeProduit(){
         Map<String,Integer> mapProduits = new TreeMap<>();
 
         for(Product p: productDao.findAll()) {
             mapProduits.put(p.toString(), p.getPrix() - p.getPrixAchat());
         }
 
-        return mapProduits;
+        return new ResponseEntity<>(mapProduits, HttpStatus.CREATED);
     }
 
     /**
@@ -183,15 +182,16 @@ public class ProductController {
      */
     @ApiOperation(value="Renvoie une liste des produits trié par ordre alphabétique")
     @GetMapping(value = "/Produits/triparnom")
-    public List<Product> listProduitsTrieParNom(){
-        return productDao.listProduitsAlphabetic();
+    public ResponseEntity<List<Product>> listProduitsTrieParNom(){
+
+        return new ResponseEntity<>(productDao.findAllByOrderByNomAsc(),HttpStatus.OK);
     }
 
     //Pour les tests
     @GetMapping(value = "test/produits/{prix}")
-    public List<Product>  testeDeRequetes(@PathVariable int prix) {
+    public ResponseEntity<List<Product>>  testeDeRequetes(@PathVariable int prix) {
 
-        return productDao.chercherUnProduitCher(400);
+        return new ResponseEntity<>(productDao.chercherUnProduitCher(400), HttpStatus.FOUND);
     }
 
 
